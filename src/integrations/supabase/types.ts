@@ -142,7 +142,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_caregiver_for_elder: {
+        Args: { caregiver_user_id: string; elder_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       memory_type:

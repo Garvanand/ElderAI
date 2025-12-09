@@ -12,7 +12,10 @@ import {
   generateDailySummaryApi,
 } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "../../src/integrations/supabase/client"
 import type { Memory, Question, DailySummary } from "@/src/types"
+
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true"
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
@@ -28,9 +31,24 @@ export default function CaregiverPage() {
   const [summaries, setSummaries] = useState<DailySummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [authLoading, setAuthLoading] = useState(!DEV_BYPASS_AUTH)
   const { toast } = useToast()
 
   const elderId = getElderId()
+
+  // Check auth (skip in dev mode)
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setAuthLoading(false)
+      return
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+  }, [])
 
   const loadData = async () => {
     setIsLoading(true)
@@ -80,8 +98,49 @@ export default function CaregiverPage() {
     }
   }
 
+  // Show loading during auth check
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show message if not authenticated (but allow in dev mode)
+  if (!user && !DEV_BYPASS_AUTH) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>Not Signed In</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Please sign in to access the caregiver dashboard.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Note: In development, you can set NEXT_PUBLIC_DEV_BYPASS_AUTH=true to bypass auth.
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Current Elder ID (from query params): {elderId}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background px-4 py-8">
+      {DEV_BYPASS_AUTH && (
+        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-md text-sm text-yellow-800 dark:text-yellow-200">
+          ⚠️ DEV MODE: Auth bypassed - Elder ID: {elderId}
+        </div>
+      )}
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Caregiver Dashboard</h1>
