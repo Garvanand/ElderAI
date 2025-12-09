@@ -2,7 +2,7 @@
 
 A compassionate, AI-powered memory support application designed to help elderly users record memories, ask questions, and stay connected with caregivers. Built with TypeScript, Next.js 14, React 19, and Supabase.
 
-**Live Demo:** [https://prj-4tof01oj-frontend.vercel.app/](https://prj-4tof01oj-frontend.vercel.app/)
+**Architectural Demo:** [https://prj-4tof01oj-frontend.vercel.app/](https://prj-4tof01oj-frontend.vercel.app/)
 
 ## 🌟 Features
 
@@ -220,5 +220,5 @@ This is a private project. For questions or issues, please contact the project m
 
 ---
 
-**Made with ❤️ for elderly users and their caregivers**
+**Made with ❤️ for elderly users and their caregivers by GARV ANAND**
 

@@ -2,10 +2,14 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+interface TextareaProps extends React.ComponentProps<'textarea'> {
+  elder?: boolean
+}
+
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
-  React.ComponentProps<'textarea'>
->(({ className, ...props }, ref) => {
+  TextareaProps
+>(({ className, elder: _elder, ...props }, ref) => {
   return (
     <textarea
       className={cn(

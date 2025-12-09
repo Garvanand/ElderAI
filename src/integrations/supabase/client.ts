@@ -2,8 +2,19 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+// Safe env access for both Next.js and Vite builds (avoids `process` in browser)
+const nextEnv =
+  typeof process !== 'undefined' && process.env ? process.env : {};
+
+const SUPABASE_URL =
+  nextEnv.NEXT_PUBLIC_SUPABASE_URL ||
+  import.meta.env.VITE_SUPABASE_URL ||
+  '';
+
+const SUPABASE_PUBLISHABLE_KEY =
+  nextEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

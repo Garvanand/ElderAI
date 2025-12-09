@@ -37,8 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Check if Supabase is properly configured
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    // Check if Supabase is properly configured (support Next + Vite, avoid process in browser)
+    const nextEnv = typeof process !== 'undefined' && process.env ? process.env : {};
+    const supabaseUrl =
+      nextEnv.NEXT_PUBLIC_SUPABASE_URL ||
+      import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
       setLoading(false);
       return;
