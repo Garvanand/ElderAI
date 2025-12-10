@@ -40,3 +40,4 @@ Your Gemini API free tier quota has been exceeded. The app now handles this grac
 
 The app is fully functional without Gemini API!
 
+

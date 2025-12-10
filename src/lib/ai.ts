@@ -18,6 +18,7 @@ const getGeminiApiKey = (): string | null => {
   return (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || null;
 };
 
+
 /**
  * Answer a question using the elder's memories as context
  */
@@ -86,9 +87,7 @@ async function answerQuestionWithGemini(
 ): Promise<AnswerResponse> {
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Use gemini-1.5-flash which has better free tier availability
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
+  
   // Build context from memories
   const memoryContext = memories.slice(0, 10).map((m, i) => 
     `Memory ${i + 1}: ${m.raw_text}`
@@ -110,16 +109,36 @@ Instructions:
 
 Answer:`;
 
-  const result = await model.generateContent(prompt);
-  const answer = result.response.text().trim();
+  // Try multiple model names in order
+  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+  let lastError: any = null;
+  
+  for (const modelName of modelNames) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const answer = result.response.text().trim();
 
-  // Find top 3 most relevant memories
-  const matchedMemories = memories.slice(0, 3);
+      // Find top 3 most relevant memories
+      const matchedMemories = memories.slice(0, 3);
 
-  return {
-    answer,
-    matchedMemories,
-  };
+      return {
+        answer,
+        matchedMemories,
+      };
+    } catch (error: any) {
+      // If it's a 404 (model not found), try next model
+      if (error?.status === 404 || error?.message?.includes('404')) {
+        lastError = error;
+        continue;
+      }
+      // For other errors (quota, etc.), throw immediately
+      throw error;
+    }
+  }
+  
+  // If all models failed with 404, throw the last error
+  throw lastError || new Error('No available Gemini models');
 }
 
 /**
@@ -168,8 +187,6 @@ async function extractMemoryMetadataWithGemini(
 }> {
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Use gemini-1.5-flash which has better free tier availability
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const prompt = `Analyze this memory text and extract structured information:
 
@@ -193,26 +210,46 @@ Return ONLY valid JSON:
 
 Return only the JSON, no additional text.`;
 
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text().trim();
+  // Try multiple model names in order
+  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+  let lastError: any = null;
+  
+  for (const modelName of modelNames) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text().trim();
 
-  // Parse JSON response (handle markdown code blocks if present)
-  let jsonText = responseText;
-  if (responseText.startsWith('```')) {
-    jsonText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // Parse JSON response (handle markdown code blocks if present)
+      let jsonText = responseText;
+      if (responseText.startsWith('```')) {
+        jsonText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      }
+
+      const parsed = JSON.parse(jsonText);
+
+      return {
+        type: parsed.type || 'other',
+        tags: parsed.tags || [],
+        structured: {
+          objects: parsed.objects || [],
+          locations: parsed.locations || [],
+          people: parsed.people || [],
+        },
+      };
+    } catch (error: any) {
+      // If it's a 404 (model not found), try next model
+      if (error?.status === 404 || error?.message?.includes('404')) {
+        lastError = error;
+        continue;
+      }
+      // For other errors (quota, etc.), throw immediately
+      throw error;
+    }
   }
-
-  const parsed = JSON.parse(jsonText);
-
-  return {
-    type: parsed.type || 'other',
-    tags: parsed.tags || [],
-    structured: {
-      objects: parsed.objects || [],
-      locations: parsed.locations || [],
-      people: parsed.people || [],
-    },
-  };
+  
+  // If all models failed with 404, throw the last error
+  throw lastError || new Error('No available Gemini models');
 }
 
 /**
@@ -321,8 +358,6 @@ async function generateSummaryWithGemini(
 ): Promise<string> {
   const { GoogleGenerativeAI } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Use gemini-1.5-flash which has better free tier availability
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
   const memoryText = memories.map(m => m.raw_text).join('\n\n');
 
@@ -340,8 +375,28 @@ Instructions:
 
 Summary:`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  // Try multiple model names in order
+  const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+  let lastError: any = null;
+  
+  for (const modelName of modelNames) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
+    } catch (error: any) {
+      // If it's a 404 (model not found), try next model
+      if (error?.status === 404 || error?.message?.includes('404')) {
+        lastError = error;
+        continue;
+      }
+      // For other errors (quota, etc.), throw immediately
+      throw error;
+    }
+  }
+  
+  // If all models failed with 404, throw the last error
+  throw lastError || new Error('No available Gemini models');
 }
 
 /**
