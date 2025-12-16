@@ -6,29 +6,25 @@ const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow public routes
+  // Public routes (always allowed)
   const publicRoutes = ['/', '/auth', '/api']
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
-    return NextResponse.next()
-  }
+  const isPublic = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
 
-  // DEV MODE: Bypass auth checks
+  // DEV MODE: Bypass auth checks for all non-public routes
   if (DEV_BYPASS_AUTH) {
     return NextResponse.next()
   }
 
-  // Check for auth token in cookies
-  const sessionToken = request.cookies.get('sb-access-token') || 
+  const sessionToken = request.cookies.get('sb-access-token') ||
                        request.cookies.get('supabase-auth-token')
 
-  // Protected routes
+  // Routes that require authentication
   const protectedRoutes = ['/elder', '/caregiver']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
   if (isProtectedRoute && !sessionToken) {
-    // Redirect to home if not authenticated
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/auth'
     return NextResponse.redirect(url)
   }
 

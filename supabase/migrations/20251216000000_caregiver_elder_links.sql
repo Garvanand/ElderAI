@@ -37,4 +37,45 @@ CREATE INDEX IF NOT EXISTS idx_caregiver_elder_links_caregiver
 CREATE INDEX IF NOT EXISTS idx_caregiver_elder_links_elder
   ON public.caregiver_elder_links (elder_user_id);
 
+-- 5. Helper function to link caregiver to elder by elder email
+CREATE OR REPLACE FUNCTION public.link_caregiver_to_elder_by_email(
+  caregiver_uid UUID,
+  elder_email TEXT
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  elder_uid UUID;
+  caregiver_profile_role public.user_role;
+BEGIN
+  -- Ensure caller is a caregiver
+  SELECT role INTO caregiver_profile_role
+  FROM public.profiles
+  WHERE user_id = caregiver_uid;
+
+  IF caregiver_profile_role IS NULL OR caregiver_profile_role <> 'caregiver' THEN
+    RAISE EXCEPTION 'Only caregivers can link elders';
+  END IF;
+
+  -- Look up elder user by email in auth.users
+  SELECT id INTO elder_uid
+  FROM auth.users
+  WHERE email = elder_email;
+
+  IF elder_uid IS NULL THEN
+    RAISE EXCEPTION 'No elder found with that email';
+  END IF;
+
+  -- Insert link if it does not already exist
+  INSERT INTO public.caregiver_elder_links (caregiver_user_id, elder_user_id)
+  VALUES (caregiver_uid, elder_uid)
+  ON CONFLICT (caregiver_user_id, elder_user_id) DO NOTHING;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.link_caregiver_to_elder_by_email(UUID, TEXT) TO authenticated;
+
 

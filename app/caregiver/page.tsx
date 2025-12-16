@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Loader2, RefreshCw } from "lucide-react"
-import { getElderContext, getMemories, getQuestions, getRecentSummaries, generateDailySummaryApi } from "@/lib/api"
+import {
+  getElderContext,
+  getMemories,
+  getQuestions,
+  getRecentSummaries,
+  generateDailySummaryApi,
+  linkElderByEmail,
+} from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "../../src/integrations/supabase/client"
 import type { Memory, Question, DailySummary } from "@/src/types"
@@ -28,6 +36,8 @@ export default function CaregiverPage() {
   const [user, setUser] = useState<any>(null)
   const [authLoading, setAuthLoading] = useState(!DEV_BYPASS_AUTH)
   const [elderId, setElderId] = useState<string | null>(null)
+  const [linkEmail, setLinkEmail] = useState("")
+  const [linking, setLinking] = useState(false)
   const { toast } = useToast()
 
   // Check auth (skip in dev mode)
@@ -104,6 +114,30 @@ export default function CaregiverPage() {
     }
   }
 
+  const handleLinkElder = async () => {
+    if (!linkEmail.trim()) {
+      return
+    }
+    setLinking(true)
+    try {
+      await linkElderByEmail(linkEmail.trim())
+      toast({
+        title: "Linked",
+        description: "The elder has been linked to your caregiver account.",
+      })
+      setLinkEmail("")
+      await loadData()
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to link elder",
+        variant: "destructive",
+      })
+    } finally {
+      setLinking(false)
+    }
+  }
+
   // Show loading during auth check
   if (authLoading) {
     return (
@@ -131,9 +165,6 @@ export default function CaregiverPage() {
             <p className="text-sm text-muted-foreground">
               Note: In development, you can set NEXT_PUBLIC_DEV_BYPASS_AUTH=true to bypass auth.
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Current Elder ID (from query params): {elderId}
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -150,7 +181,11 @@ export default function CaregiverPage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Caregiver Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Elder ID: {elderId}</p>
+          {elderId ? (
+            <p className="text-muted-foreground mt-1">Elder ID: {elderId}</p>
+          ) : (
+            <p className="text-muted-foreground mt-1">No elder linked yet</p>
+          )}
         </div>
         <Button onClick={handleGenerateToday} disabled={isGenerating} className="gap-2">
           {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -185,6 +220,33 @@ export default function CaregiverPage() {
           </CardContent>
         </Card>
       </div>
+
+      {!elderId && (
+        <Card className="border mb-8">
+          <CardHeader>
+            <CardTitle>Link to an elder</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Enter the email address your elder used to sign up. You&apos;ll then be able to view their memories,
+              questions, and summaries.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                type="email"
+                placeholder="elder@example.com"
+                value={linkEmail}
+                onChange={(e) => setLinkEmail(e.target.value)}
+                className="sm:max-w-xs"
+              />
+              <Button onClick={handleLinkElder} disabled={linking} className="sm:w-auto w-full gap-2">
+                {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Link elder
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground gap-3">

@@ -291,3 +291,22 @@ export async function getRecentSummaries(
   return (data || []) as DailySummary[];
 }
 
+/**
+ * Link the current caregiver to an elder using the elder's email.
+ */
+export async function linkElderByEmail(elderEmail: string): Promise<void> {
+  const response = await fetch("/api/caregivers/link-elder", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ elderEmail }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to link elder" }))
+    throw new Error(error.error || `HTTP error! status: ${response.status}`)
+  }
+}
+
