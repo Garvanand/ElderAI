@@ -4,13 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, RefreshCw } from "lucide-react"
-import {
-  getElderId,
-  getMemories,
-  getQuestions,
-  getRecentSummaries,
-  generateDailySummaryApi,
-} from "@/lib/api"
+import { getElderContext, getMemories, getQuestions, getRecentSummaries, generateDailySummaryApi } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "../../src/integrations/supabase/client"
 import type { Memory, Question, DailySummary } from "@/src/types"
@@ -33,9 +27,8 @@ export default function CaregiverPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [authLoading, setAuthLoading] = useState(!DEV_BYPASS_AUTH)
+  const [elderId, setElderId] = useState<string | null>(null)
   const { toast } = useToast()
-
-  const elderId = getElderId()
 
   // Check auth (skip in dev mode)
   useEffect(() => {
@@ -53,10 +46,22 @@ export default function CaregiverPage() {
   const loadData = async () => {
     setIsLoading(true)
     try {
+      const context = await getElderContext()
+      if (!context.elderId) {
+        setIsLoading(false)
+        toast({
+          title: "No elder selected",
+          description: "Link this caregiver account to an elder to view their data.",
+          variant: "destructive",
+        })
+        return
+      }
+      setElderId(context.elderId)
+
       const [memData, qData, sData] = await Promise.all([
-        getMemories(elderId, { limit: 20 }).catch(() => []),
-        getQuestions(elderId, 10).catch(() => []),
-        getRecentSummaries(elderId, 7).catch(() => []),
+        getMemories(context.elderId, { limit: 20 }).catch(() => []),
+        getQuestions(context.elderId, 10).catch(() => []),
+        getRecentSummaries(context.elderId, 7).catch(() => []),
       ])
       setMemories(memData)
       setQuestions(qData)
@@ -78,6 +83,7 @@ export default function CaregiverPage() {
   }, [])
 
   const handleGenerateToday = async () => {
+    if (!elderId) return
     setIsGenerating(true)
     try {
       await generateDailySummaryApi(elderId)

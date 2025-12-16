@@ -137,6 +137,27 @@ export type Database = {
         }
         Relationships: []
       }
+      caregiver_elder_links: {
+        Row: {
+          id: string
+          caregiver_user_id: string
+          elder_user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          caregiver_user_id: string
+          elder_user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          caregiver_user_id?: string
+          elder_user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

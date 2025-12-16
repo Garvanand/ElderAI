@@ -10,24 +10,26 @@ import type { Memory, Question, AnswerResponse, DailySummary } from '@/src/types
 const API_BASE_URL = typeof window !== 'undefined' ? '' : 'http://localhost:3000';
 
 /**
- * Get the current elder ID from query params or use default
+ * Get the current elder ID resolved by the backend for the authenticated user.
+ * Falls back to the previous URL-based behaviour only if the backend endpoint is unavailable.
  */
-export function getElderId(): string {
-  if (typeof window === 'undefined') {
-    return 'default-elder-id';
+export async function getElderContext(): Promise<{ elderId: string | null; role: "elder" | "caregiver" | null }> {
+  try {
+    const response = await fetch("/api/current-elder", { credentials: "include" })
+    if (!response.ok) {
+      return { elderId: null, role: null }
+    }
+    const data = (await response.json()) as { elderId: string | null; role: "elder" | "caregiver" | null }
+    return data
+  } catch {
+    // Fallback to legacy URL-based approach as a last resort for dev
+    if (typeof window === "undefined") {
+      return { elderId: null, role: null }
+    }
+    const params = new URLSearchParams(window.location.search)
+    const elderId = params.get("elderId")
+    return { elderId: elderId || null, role: null }
   }
-
-  const params = new URLSearchParams(window.location.search);
-  const elderId = params.get('elderId');
-  const role = params.get('role');
-  
-  // If role=elder, we'll use a default elder ID for now
-  // Later this will come from Supabase auth
-  if (role === 'elder' || elderId) {
-    return elderId || 'default-elder-id';
-  }
-  
-  return 'default-elder-id';
 }
 
 /**

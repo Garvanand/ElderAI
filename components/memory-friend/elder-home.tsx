@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Plus, HelpCircle, Clock, Loader2 } from "lucide-react"
-import { getMemories, getQuestions, getElderId, getDailySummary } from "@/lib/api"
+import { getMemories, getQuestions, getDailySummary, getElderContext } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import type { Memory as DBMemory, Question as DBQuestion, DailySummary } from "@/src/types"
 
@@ -36,6 +36,7 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
   const [todaySummary, setTodaySummary] = useState<DailySummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [elderId, setElderId] = useState<string | null>(null)
   const { toast } = useToast()
 
   const todayLocalDate = () => {
@@ -48,14 +49,24 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
 
   useEffect(() => {
     const fetchData = async () => {
-      const elderId = getElderId()
-      
+      const context = await getElderContext()
+
+      if (!context.elderId) {
+        setError("No elder selected. Please sign in as an elder or ask a caregiver to link you.")
+        setIsLoadingMemories(false)
+        setIsLoadingQuestions(false)
+        setIsLoadingSummary(false)
+        return
+      }
+
+      setElderId(context.elderId)
+
       try {
         // Fetch memories and questions in parallel
         const [memoriesData, questionsData, summaryData] = await Promise.all([
-          getMemories(elderId).catch(() => []),
-          getQuestions(elderId, 5).catch(() => []),
-          getDailySummary(elderId, todayLocalDate()).catch(() => null),
+          getMemories(context.elderId).catch(() => []),
+          getQuestions(context.elderId, 5).catch(() => []),
+          getDailySummary(context.elderId, todayLocalDate()).catch(() => null),
         ])
         
         setMemories(memoriesData.slice(0, 5))
