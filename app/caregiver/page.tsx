@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Loader2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react"
+import { Loader2, RefreshCw, ChevronDown, ChevronUp, Download } from "lucide-react"
 import {
   getElderContext,
   getMemories,
@@ -54,6 +54,19 @@ export default function CaregiverPage() {
       }
       return next
     })
+  }
+
+  const handleDownloadSummary = (summary: DailySummary) => {
+    const content = `Date: ${formatDate(summary.date)}\nElder ID: ${summary.elder_id}\n\nSummary:\n${summary.summary_text}\n`
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `memoryfriend-summary-${summary.date}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   // Check auth (skip in dev mode)
@@ -359,28 +372,39 @@ export default function CaregiverPage() {
                     const shouldTruncate = s.summary_text.length > 120
                     return (
                       <div key={s.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center justify-between mb-1 gap-2">
                           <p className="text-sm font-medium text-muted-foreground">{formatDate(s.date)}</p>
-                          {shouldTruncate && (
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleSummary(s.id)}
+                              onClick={() => handleDownloadSummary(s)}
                               className="h-6 px-2 text-xs"
                             >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronUp className="h-3 w-3 mr-1" />
-                                  Show less
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="h-3 w-3 mr-1" />
-                                  Show more
-                                </>
-                              )}
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
                             </Button>
-                          )}
+                            {shouldTruncate && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleSummary(s.id)}
+                                className="h-6 px-2 text-xs"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="h-3 w-3 mr-1" />
+                                    Show less
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-3 w-3 mr-1" />
+                                    Show more
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         <p className="text-foreground text-sm leading-relaxed">
                           {isExpanded || !shouldTruncate ? s.summary_text : `${s.summary_text.slice(0, 120)}...`}
