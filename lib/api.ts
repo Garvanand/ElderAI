@@ -13,22 +13,30 @@ const API_BASE_URL = typeof window !== 'undefined' ? '' : 'http://localhost:3000
  * Get the current elder ID resolved by the backend for the authenticated user.
  * Falls back to the previous URL-based behaviour only if the backend endpoint is unavailable.
  */
-export async function getElderContext(): Promise<{ elderId: string | null; role: "elder" | "caregiver" | null }> {
+export async function getElderContext(): Promise<{
+  elderId: string | null
+  role: "elder" | "caregiver" | null
+  userName?: string | null
+}> {
   try {
     const response = await fetch("/api/current-elder", { credentials: "include" })
     if (!response.ok) {
-      return { elderId: null, role: null }
+      return { elderId: null, role: null, userName: null }
     }
-    const data = (await response.json()) as { elderId: string | null; role: "elder" | "caregiver" | null }
+    const data = (await response.json()) as {
+      elderId: string | null
+      role: "elder" | "caregiver" | null
+      userName?: string | null
+    }
     return data
   } catch {
     // Fallback to legacy URL-based approach as a last resort for dev
     if (typeof window === "undefined") {
-      return { elderId: null, role: null }
+      return { elderId: null, role: null, userName: null }
     }
     const params = new URLSearchParams(window.location.search)
     const elderId = params.get("elderId")
-    return { elderId: elderId || null, role: null }
+    return { elderId: elderId || null, role: null, userName: null }
   }
 }
 

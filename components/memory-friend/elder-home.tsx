@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, HelpCircle, Clock, Loader2 } from "lucide-react"
+import { Plus, HelpCircle, Clock, Loader2, Sparkles, BookOpen } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getMemories, getQuestions, getDailySummary, getElderContext } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
 import type { Memory as DBMemory, Question as DBQuestion, DailySummary } from "@/src/types"
@@ -121,8 +122,11 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           </Card>
         ) : (
           <Card className="border border-dashed">
-            <CardContent className="p-6 text-muted-foreground">
-              No summary generated yet for today.
+            <CardContent className="p-6 text-center">
+              <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">
+                No summary generated yet for today. Your daily summary will appear here once you&apos;ve added some memories.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -157,8 +161,15 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           <h2 id="recent-memories-heading" className="text-2xl md:text-3xl font-semibold text-foreground mb-6">
             Recent Memories
           </h2>
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-2">
+                <CardContent className="p-6 space-y-3">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-32" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
       ) : lastFiveMemories.length > 0 ? (
@@ -193,6 +204,24 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
             ))}
           </div>
         </section>
+      ) : !isLoadingMemories && elderId ? (
+        <section className="w-full max-w-2xl mb-12" aria-labelledby="recent-memories-heading">
+          <h2 id="recent-memories-heading" className="text-2xl md:text-3xl font-semibold text-foreground mb-6">
+            Recent Memories
+          </h2>
+          <Card className="border-2 border-dashed">
+            <CardContent className="p-8 text-center">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg text-muted-foreground mb-4">
+                You haven&apos;t added any memories yet.
+              </p>
+              <Button onClick={onAddMemory} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Add Your First Memory
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       ) : null}
 
       {/* Recent Questions */}
@@ -201,8 +230,15 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           <h2 id="recent-questions-heading" className="text-2xl md:text-3xl font-semibold text-foreground mb-6">
             Recent Questions
           </h2>
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <div className="flex flex-col gap-4">
+            {[1, 2].map((i) => (
+              <Card key={i} className="border-2">
+                <CardContent className="p-6 space-y-3">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-24" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
       ) : lastFiveQuestions.length > 0 ? (
@@ -226,6 +262,24 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
               </Card>
             ))}
           </div>
+        </section>
+      ) : !isLoadingQuestions && elderId ? (
+        <section className="w-full max-w-2xl" aria-labelledby="recent-questions-heading">
+          <h2 id="recent-questions-heading" className="text-2xl md:text-3xl font-semibold text-foreground mb-6">
+            Recent Questions
+          </h2>
+          <Card className="border-2 border-dashed">
+            <CardContent className="p-8 text-center">
+              <HelpCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg text-muted-foreground mb-4">
+                You haven&apos;t asked any questions yet.
+              </p>
+              <Button onClick={onAskQuestion} size="lg" variant="secondary" className="gap-2">
+                <HelpCircle className="h-5 w-5" />
+                Ask Your First Question
+              </Button>
+            </CardContent>
+          </Card>
         </section>
       ) : null}
 

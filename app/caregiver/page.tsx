@@ -14,6 +14,7 @@ import {
   linkElderByEmail,
 } from "@/lib/api"
 import { useToast } from "@/components/ui/use-toast"
+import { AppHeader } from "@/components/memory-friend/app-header"
 import { supabase } from "../../src/integrations/supabase/client"
 import type { Memory, Question, DailySummary } from "@/src/types"
 
@@ -38,6 +39,8 @@ export default function CaregiverPage() {
   const [elderId, setElderId] = useState<string | null>(null)
   const [linkEmail, setLinkEmail] = useState("")
   const [linking, setLinking] = useState(false)
+  const [userName, setUserName] = useState<string | null>(null)
+  const [role, setRole] = useState<"elder" | "caregiver" | null>(null)
   const { toast } = useToast()
 
   // Check auth (skip in dev mode)
@@ -89,6 +92,11 @@ export default function CaregiverPage() {
 
   useEffect(() => {
     loadData()
+    // Fetch user context for header
+    getElderContext().then((ctx) => {
+      setUserName(ctx.userName || null)
+      setRole(ctx.role)
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -172,13 +180,15 @@ export default function CaregiverPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      {DEV_BYPASS_AUTH && (
-        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-md text-sm text-yellow-800 dark:text-yellow-200">
-          ⚠️ DEV MODE: Auth bypassed - Elder ID: {elderId}
-        </div>
-      )}
-      <header className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-background">
+      <AppHeader userName={userName || "Caregiver"} role={role || "caregiver"} />
+      <div className="px-4 py-8">
+        {DEV_BYPASS_AUTH && (
+          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-md text-sm text-yellow-800 dark:text-yellow-200">
+            ⚠️ DEV MODE: Auth bypassed
+          </div>
+        )}
+        <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Caregiver Dashboard</h1>
           {elderId ? (
@@ -263,7 +273,12 @@ export default function CaregiverPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {memories.length === 0 ? (
-                  <p className="text-muted-foreground">No memories available.</p>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-2">No memories available yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Memories will appear here once the elder starts adding them.
+                    </p>
+                  </div>
                 ) : (
                   memories.map((m) => (
                     <div key={m.id} className="border-b pb-3 last:border-b-0 last:pb-0">
@@ -293,7 +308,12 @@ export default function CaregiverPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {questions.length === 0 ? (
-                  <p className="text-muted-foreground">No questions available.</p>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-2">No questions asked yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Questions and answers will appear here once the elder starts asking.
+                    </p>
+                  </div>
                 ) : (
                   questions.map((q) => (
                     <div key={q.id} className="border-b pb-3 last:border-b-0 last:pb-0">
@@ -314,7 +334,12 @@ export default function CaregiverPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {summaries.length === 0 ? (
-                  <p className="text-muted-foreground">No summaries yet.</p>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-2">No summaries generated yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Generate a daily summary using the button above to see activity highlights.
+                    </p>
+                  </div>
                 ) : (
                   summaries.map((s) => (
                     <div key={s.id} className="border-b pb-3 last:border-b-0 last:pb-0">
@@ -330,6 +355,7 @@ export default function CaregiverPage() {
           </section>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -83,7 +83,11 @@ export async function GET(request: NextRequest) {
 
   // If elder, their own auth user id is the elderId
   if (profile.role === "elder") {
-    return NextResponse.json({ elderId: user.id, role: "elder" as const })
+    return NextResponse.json({
+      elderId: user.id,
+      role: "elder" as const,
+      userName: profile.full_name || user.email?.split("@")[0] || "User",
+    })
   }
 
   // If caregiver, check links
@@ -102,19 +106,42 @@ export async function GET(request: NextRequest) {
     }
 
     if (!links || links.length === 0) {
-      return NextResponse.json({ elderId: null, role: "caregiver" as const })
+      return NextResponse.json({
+        elderId: null,
+        role: "caregiver" as const,
+        userName: profile.full_name || user.email?.split("@")[0] || "Caregiver",
+      })
     }
 
     // If a specific elderId was requested, ensure it's linked
     if (requestedElderId) {
       const match = links.find((l) => l.elder_user_id === requestedElderId)
       if (match) {
-        return NextResponse.json({ elderId: match.elder_user_id, role: "caregiver" as const })
+        // Fetch elder's profile for name
+        const { data: elderProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", match.elder_user_id)
+          .maybeSingle()
+        return NextResponse.json({
+          elderId: match.elder_user_id,
+          role: "caregiver" as const,
+          userName: profile.full_name || user.email?.split("@")[0] || "Caregiver",
+        })
       }
     }
 
     // Fallback: first linked elder
-    return NextResponse.json({ elderId: links[0].elder_user_id, role: "caregiver" as const })
+    const { data: elderProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", links[0].elder_user_id)
+      .maybeSingle()
+    return NextResponse.json({
+      elderId: links[0].elder_user_id,
+      role: "caregiver" as const,
+      userName: profile.full_name || user.email?.split("@")[0] || "Caregiver",
+    })
   }
 
   return NextResponse.json({ elderId: null, role: null, error: "Unknown role" }, { status: 400 })
