@@ -53,10 +53,21 @@ const Index = () => {
               <Brain className="w-7 h-7 text-primary-foreground" />
             </div>
             <span className="text-2xl font-display font-bold text-foreground">Memory Friend</span>
+            {!loading && user && profile && (
+              <span className="ml-3 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                {profile.role === 'caregiver' ? 'Caregiver' : 'Elder'} account
+              </span>
+            )}
           </div>
-          <Link to="/auth">
-            <Button variant="caregiver">Sign In</Button>
-          </Link>
+          {!loading && user && profile ? (
+            <Button variant="caregiver" onClick={() => navigate(profile.role === 'caregiver' ? '/caregiver' : '/elder')}>
+              Go to dashboard
+            </Button>
+          ) : (
+            <Link to="/auth">
+              <Button variant="caregiver">Sign In</Button>
+            </Link>
+          )}
         </div>
       </header>
 
