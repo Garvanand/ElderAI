@@ -44,3 +44,4 @@ The app is fully functional without Gemini API!
 
 
 
+

@@ -132,27 +132,26 @@ export default function HomePage() {
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
-            Your Caring<br />
-            <span className="text-primary">Memory Companion</span>
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-6 leading-tight">
+            Remember What Matters<br />
+            <span className="text-primary">One Simple Tap at a Time</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            A gentle, easy-to-use app that helps you record memories, ask questions, and stay connected with loved
-            ones.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+            Save the important things - people, places, and routines. Ask gentle questions when you forget. Share with loved ones who care.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/auth">
-              <Button size="lg" className="w-full sm:w-auto gap-2">
-                Get Started
-                <ArrowRight className="w-6 h-6" />
-              </Button>
-            </Link>
-            <Link href="/auth">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                I&apos;m a Caregiver
+              <Button size="lg" className="w-full sm:w-auto gap-2 text-lg px-8 py-6 h-auto">
+                I&apos;m a Memory User
+                <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
           </div>
+          <Link href="/auth">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+              I&apos;m a Caregiver
+            </Button>
+          </Link>
         </div>
       </main>
     </div>

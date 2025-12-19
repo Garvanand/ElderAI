@@ -63,8 +63,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     recognition.onerror = () => {
       setIsListening(false)
       toast({
-        title: "Voice input error",
-        description: "Sorry, I couldn't understand that. Please try again.",
+        title: "Voice input",
+        description: "We couldn't hear that clearly. Please try speaking again, or type your memory instead.",
         variant: "destructive",
       })
     }
@@ -75,8 +75,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
   const toggleListening = () => {
     if (!recognitionRef.current) {
       toast({
-        title: "Voice input not supported",
-        description: "Your browser does not support speech recognition.",
+        title: "Voice input not available",
+        description: "Your device doesn't support voice input. Please type your memory instead.",
         variant: "destructive",
       })
       return
@@ -100,8 +100,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
       // Validate file size
       if (selected.size > MAX_IMAGE_SIZE_BYTES) {
         toast({
-          title: "File too large",
-          description: `Please choose an image smaller than ${MAX_IMAGE_SIZE_MB}MB.`,
+          title: "Image too large",
+          description: `Please choose a smaller image (under ${MAX_IMAGE_SIZE_MB}MB). You can resize it on your device first.`,
           variant: "destructive",
         })
         e.target.value = ""
@@ -110,8 +110,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
       // Validate file type
       if (!selected.type.startsWith("image/")) {
         toast({
-          title: "Invalid file type",
-          description: "Please choose an image file.",
+          title: "Not an image",
+          description: "Please choose a photo or image file (like .jpg or .png).",
           variant: "destructive",
         })
         e.target.value = ""
@@ -130,12 +130,12 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     // Client-side validation
     const trimmedText = text.trim()
     if (!trimmedText) {
-      setError("Please enter some text for your memory.")
+      setError("Please tell us what you'd like to remember.")
       return
     }
     
     if (trimmedText.length > MAX_TEXT_LENGTH) {
-      setError(`Memory text is too long. Please keep it under ${MAX_TEXT_LENGTH} characters.`)
+      setError(`That's a bit too long. Please keep it shorter - under ${MAX_TEXT_LENGTH} characters.`)
       return
     }
     
@@ -148,7 +148,7 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
     try {
       const context = await getElderContext()
       if (!context.elderId) {
-        throw new Error("No elder selected. Please sign in again or ask a caregiver to link you.")
+        throw new Error("We couldn't find your account. Please sign in again, or ask a caregiver for help.")
       }
       const dbType = mapMemoryType(type)
       let imageUrl: string | null = null
@@ -161,8 +161,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
         } catch (uploadErr) {
           throw new Error(
             uploadErr instanceof Error
-              ? `Image upload failed: ${uploadErr.message}`
-              : "Failed to upload image. Please try again."
+              ? `We couldn't upload your image: ${uploadErr.message}. Please try a smaller image.`
+              : "We couldn't upload your image. Please try again with a smaller file."
           )
         }
       }
@@ -178,7 +178,8 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
       // Show success message with animation
       toast({
         title: "Memory saved! ✨",
-        description: "Your memory has been successfully saved.",
+        description: "Your memory has been saved and will be shared with your caregiver.",
+        variant: "success",
       })
       
       // Call success callback if provided
@@ -186,11 +187,11 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
         onSuccess()
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to save memory. Please try again."
+      const errorMessage = err instanceof Error ? err.message : "We couldn't save your memory right now. Please try again in a moment."
       setError(errorMessage)
       setUploadProgress(null)
       toast({
-        title: "Error",
+        title: "Something went wrong",
         description: errorMessage,
         variant: "destructive",
       })
@@ -239,9 +240,12 @@ export function MemoryForm({ onSuccess }: MemoryFormProps) {
           </Button>
           {isListening && <span className="text-sm text-muted-foreground">Speak now...</span>}
         </div>
-        <p id="memory-hint" className="text-base text-muted-foreground">
-          Write anything you want to remember - a name, a place, an event, or a reminder.
-        </p>
+        <div id="memory-hint" className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+          <p className="text-base text-foreground font-medium mb-1">💡 Tip:</p>
+          <p className="text-sm text-muted-foreground">
+            Write anything you want to remember - a name, a place, an event, or a reminder. You can also use the microphone button to speak your memory.
+          </p>
+        </div>
       </div>
 
       {/* Image upload */}

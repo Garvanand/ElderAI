@@ -53,7 +53,7 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
       const context = await getElderContext()
 
       if (!context.elderId) {
-        setError("No elder selected. Please sign in as an elder or ask a caregiver to link you.")
+        setError("We couldn't find your account. Please sign in again, or ask a caregiver for help.")
         setIsLoadingMemories(false)
         setIsLoadingQuestions(false)
         setIsLoadingSummary(false)
@@ -74,10 +74,11 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
         setQuestions(questionsData)
         setTodaySummary(summaryData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data")
+        const errorMsg = err instanceof Error ? err.message : "We couldn't load your information. Please try refreshing the page."
+        setError(errorMsg)
         toast({
-          title: "Error",
-          description: err instanceof Error ? err.message : "Failed to load data",
+          title: "Something went wrong",
+          description: errorMsg,
           variant: "destructive",
         })
       } finally {
@@ -106,10 +107,10 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           Today’s Summary
         </h2>
         {isLoadingSummary ? (
-          <Card className="border-2">
-            <CardContent className="p-6 flex items-center gap-3 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              <span>Loading today’s summary...</span>
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardContent className="p-6 flex items-center gap-3 text-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden="true" />
+              <span className="text-lg">Preparing your daily summary...</span>
             </CardContent>
           </Card>
         ) : todaySummary ? (
@@ -212,8 +213,11 @@ export function ElderHome({ userName, onAddMemory, onAskQuestion }: ElderHomePro
           <Card className="border-2 border-dashed">
             <CardContent className="p-8 text-center">
               <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg text-muted-foreground mb-4">
+              <p className="text-lg text-muted-foreground mb-2">
                 You haven&apos;t added any memories yet.
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Start by saving something important - a person's name, a place you visited, or a daily routine.
               </p>
               <Button onClick={onAddMemory} size="lg" className="gap-2">
                 <Plus className="h-5 w-5" />

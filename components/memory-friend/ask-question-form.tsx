@@ -43,7 +43,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
     if (!speechSupported || !answer) {
       toast({
         title: "Audio not available",
-        description: "Your browser does not support text-to-speech.",
+        description: "Your device doesn't support reading aloud. You can read the answer on screen.",
         variant: "destructive",
       })
       return
@@ -62,12 +62,12 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
     // Client-side validation
     const trimmedQuestion = question.trim()
     if (!trimmedQuestion) {
-      setError("Please enter a question.")
+      setError("Please tell us what you'd like to know.")
       return
     }
     
     if (trimmedQuestion.length > MAX_QUESTION_LENGTH) {
-      setError(`Question is too long. Please keep it under ${MAX_QUESTION_LENGTH} characters.`)
+      setError(`That's a bit too long. Please keep your question shorter - under ${MAX_QUESTION_LENGTH} characters.`)
       return
     }
     
@@ -80,7 +80,7 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
     try {
       const context = await getElderContext()
       if (!context.elderId) {
-        throw new Error("No elder selected. Please sign in again or ask a caregiver to link you.")
+        throw new Error("We couldn't find your account. Please sign in again, or ask a caregiver for help.")
       }
       const result = await answerQuestion(context.elderId, trimmedQuestion)
       setAnswer(result.answer)
@@ -88,7 +88,8 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
       // Show success message
       toast({
         title: "Answer found! ✨",
-        description: "I found an answer based on your memories.",
+        description: "I found an answer based on your saved memories.",
+        variant: "success",
       })
       
       // Call success callback if provided
@@ -96,11 +97,11 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
         onSuccess()
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Sorry, I couldn't find an answer. Please try again."
+      const errorMessage = err instanceof Error ? err.message : "I couldn't find an answer in your memories. Try asking differently, or add more memories first."
       setError(errorMessage)
       setAnswer(null)
       toast({
-        title: "Error",
+        title: "Couldn't find an answer",
         description: errorMessage,
         variant: "destructive",
       })
@@ -140,9 +141,12 @@ export function AskQuestionForm({ onSuccess }: AskQuestionFormProps) {
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>{question.length} / {MAX_QUESTION_LENGTH} characters</span>
           </div>
-          <p id="question-hint" className="text-base text-muted-foreground">
-            Ask about anything you've saved - names, places, events, or reminders.
-          </p>
+          <div id="question-hint" className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+            <p className="text-base text-foreground font-medium mb-1">💡 Tip:</p>
+            <p className="text-sm text-muted-foreground">
+              Ask about anything you've saved - names, places, events, or reminders. I'll look through your memories to find the answer.
+            </p>
+          </div>
         </div>
 
         {/* Error Message */}
